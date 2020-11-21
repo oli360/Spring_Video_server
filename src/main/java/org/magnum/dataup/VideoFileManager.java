@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
 
 import org.magnum.dataup.model.Video;
 
@@ -33,11 +34,15 @@ import org.magnum.dataup.model.Video;
  * data on the file system in a "videos" folder. The class provides
  * methods for saving videos and retrieving their binary data.
  * 
- * @author jules
+ * @author jules Modified by Olivier
  *
  */
 public class VideoFileManager {
-
+	
+	private Path targetDir_ = Paths.get("videos");
+	public JsonHandler jsonHandler;
+	
+	
 	/**
 	 * This static factory method creates and returns a 
 	 * VideoFileManager object to the caller. Feel free to customize
@@ -50,7 +55,6 @@ public class VideoFileManager {
 		return new VideoFileManager();
 	}
 	
-	private Path targetDir_ = Paths.get("videos");
 	
 	// The VideoFileManager.get() method should be used
 	// to obtain an instance
@@ -58,6 +62,7 @@ public class VideoFileManager {
 		if(!Files.exists(targetDir_)){
 			Files.createDirectories(targetDir_);
 		}
+		jsonHandler = new JsonHandler();
 	}
 	
 	// Private helper method for resolving video file paths
