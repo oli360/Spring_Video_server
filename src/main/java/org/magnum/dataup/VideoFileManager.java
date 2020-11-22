@@ -17,7 +17,11 @@
  */
 package org.magnum.dataup;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,21 +29,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.magnum.dataup.model.Video;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * This class provides a simple implementation to store video binary
  * data on the file system in a "videos" folder. The class provides
  * methods for saving videos and retrieving their binary data.
  * 
- * @author jules Modified by Olivier
+ * @author Olivier based on work by Jules
  *
  */
 public class VideoFileManager {
 	
 	private Path targetDir_ = Paths.get("videos");
+	private Path metaDir_ = Paths.get("videos/videoMETA");
 	public JsonHandler jsonHandler;
 	
 	
@@ -71,6 +82,70 @@ public class VideoFileManager {
 		
 		return targetDir_.resolve("video"+v.getId()+".mpg");
 	}
+	
+	// Public method returns all videos in meta file
+	public List<Video> getVideos() throws IOException{
+		
+		List<Video> currentVideos;
+		BufferedReader reader = new BufferedReader(new FileReader(metaDir_.toString()));
+		StringBuilder jsonString = new StringBuilder();
+		String currentLine;
+		
+		//read file
+		while((currentLine = reader.readLine())!=null) {
+			jsonString.append(currentLine);
+		}
+		reader.close();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		//map Java String to Json object
+		if (jsonString.length() == 0){
+			currentVideos = new ArrayList<Video>();
+		}else {
+			List<Video> temp = (List<Video>) Arrays.asList(mapper.readValue(jsonString.toString(), Video[].class));
+			currentVideos = new ArrayList<Video>(temp);
+		}
+		
+		return currentVideos;
+	}
+	
+	//private updates metafile
+	private void updateMeta(List<Video> videos) throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(videos);
+		BufferedWriter  writer = new BufferedWriter(new FileWriter(metaDir_.toString()));
+		writer.write(json);
+		writer.close();
+	}
+	
+	//public method to add video to metaData
+	public Video  addVideo(Video v) throws IOException {
+		List<Video> videos = this.getVideos();
+		long id = 0;
+		boolean keepGoing = true;
+		
+		while(keepGoing) {
+			id = Long.parseLong(new RandomString().nextString());
+			for (Video video: videos) {
+				if (video.getId()==id) {break;}
+			}	
+			keepGoing= false;
+		}
+		
+		v.setId(id);
+		v.setDataUrl("http://localhost:8080/video/"+id+"/data");
+		videos.add(v);
+		this.updateMeta(videos);
+		return v;
+	}
+	
+	
+	public void updateVideo(long id) {
+		
+	}
+	
+
 	
 	/**
 	 * This method returns true if the specified Video has binary

@@ -1,10 +1,13 @@
 package org.magnum.dataup;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.io.File;
+import java.io.FileInputStream;
 
 import org.magnum.dataup.model.Video;
 import org.magnum.dataup.model.VideoStatus;
@@ -18,6 +21,8 @@ import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.Multipart;
 import retrofit.http.POST;
+import retrofit.http.Part;
+import retrofit.http.Path;
 import retrofit.mime.TypedFile;
 
 @Controller
@@ -31,7 +36,8 @@ public class VideoController implements VideoSvcApi{
 		List<Video> videos = new ArrayList<Video>();
 		try {
 			VideoFileManager videoFileManager = VideoFileManager.get();
-			videos = videoFileManager.jsonHandler.getVideos();		
+			videos = videoFileManager.getVideos();		
+			
 		} catch (IOException e) {
 			//return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 			e.printStackTrace();
@@ -47,8 +53,8 @@ public class VideoController implements VideoSvcApi{
 		VideoFileManager videoFileManager;
 		try {
 			videoFileManager = VideoFileManager.get();
-			videoFileManager.jsonHandler.addVideo(v);
-			videoFileManager.jsonHandler.updateMeta();
+			
+			v = videoFileManager.addVideo(v);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -60,15 +66,27 @@ public class VideoController implements VideoSvcApi{
 	@Override
 	@Multipart
 	//@RequestMapping(value = VIDEO_DATA_PATH, method = RequestMethod.POST)
-	public VideoStatus setVideoData(long id, TypedFile videoData) {
-		Collection<Video> videos = new ArrayList<Video>(); 
+	public VideoStatus setVideoData(@Path(ID_PARAMETER) long id, @Part(DATA_PARAMETER) TypedFile videoData) {
+		//assure id is in database
+		//assign pathID to video
+		//import video 
+		
+		VideoFileManager videoFileManager;
 		try {
-			VideoFileManager videoFileManager = VideoFileManager.get();
-			videos = videoFileManager.jsonHandler.getVideos();
+			videoFileManager = VideoFileManager.get();
+		
+			if (videoFileManager.jsonHandler.isIDPresent(id)) {
+				videoFileManager.jsonHandler.updateLocation(id);
+				Video v = videoFileManager.jsonHandler.getVideo(id);
+				videoFileManager.saveVideoData(v, videoData.in());
+			}
 		} catch (IOException e) {
-			//return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		
+
 
 		return null;
 	}

@@ -38,7 +38,7 @@ public class JsonHandler {
 	public JsonHandler() throws IOException {
 		
 		BufferedReader reader = new BufferedReader(new FileReader(targetDir_.toString()));
-		StringBuilder jsonString = new StringBuilder();;
+		StringBuilder jsonString = new StringBuilder();
 		String currentLine;
 		
 		while((currentLine = reader.readLine())!=null) {
@@ -57,6 +57,7 @@ public class JsonHandler {
 		}
 	}
 	
+	
 	public List<Video> getVideos(){
 		return currentVideos;
 	}
@@ -71,6 +72,49 @@ public class JsonHandler {
 		writer.write(json);
 		writer.close();
 	}
+	
+	public boolean isIDPresent(long id) {
+		for (Video video: currentVideos) {
+			if (video.getId()==id) {return true;}
+		}
+		return false;
+	}
+	
+	public void updateLocation(long id) throws IOException {
+		int index = 0;
+		for (Video video: currentVideos) {
+			if (video.getId()==id) {break;}
+			index += 1;
+		}
+		Video video = currentVideos.get(index);
+		video.setLocation("video"+video.getId()+".mpg");
+		currentVideos.set(index, video);
+		updateMeta();
+		
+	}
+	
+	public Video getVideo(long id) {
+		for (Video video: currentVideos) {
+			if (video.getId()==id) {return video;}
+		}
+		return null;
+	}
+	
+	private boolean isLocationUsed(String location) {
+		for (Video video: currentVideos) {
+			if (video.getLocation()==location) {return true;}
+		}
+		return false;
+	}
+	
+	private String getLocation() {
+		String location = new RandomString().nextString();
+		while (this.isLocationUsed(location)){
+			location = new RandomString().nextString();
+		}
+		return location;
+	}
+	
 	
 
 }
