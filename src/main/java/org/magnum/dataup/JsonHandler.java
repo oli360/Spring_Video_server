@@ -48,7 +48,7 @@ public class JsonHandler {
 		reader.close();
 		mapper = new ObjectMapper();
 		
-		if (jsonString.toString() == ""){
+		if (jsonString.length() == 0){
 			currentVideos = new ArrayList<Video>();
 		}else {
 			
